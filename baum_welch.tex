@@ -1,0 +1,235 @@
+\section{Baum-Welch algorithm}
+\label{sec:Baum-Welch}
+\subsection{概要}
+\label{sec:Baum-Welch:abst}
+Baum-Welch algorithmとは，HMMにおいてEM アルゴリズムを用いて
+HMMのパラメータを最適化するアルゴリズムである．
+\vspace{\baselineskip}
+
+$\cdot$ 手順
+\begin{enumerate}
+\item E step \label{enum:e-step} \\
+  現在推定されているパラメータに対する，モデルの尤度関数
+  $p(X,Z|\theta)$の(対数の)期待値を求める．
+\item M step \label{enum:m-step} \\
+  E stepで求めた期待値を最大化するようなパラメータを求める．
+\item 繰り返し \\
+  \ref{enum:e-step}, \ref{enum:m-step}をパラメータの値が
+  収束または値の更新時の差分が一定以下になるまで繰り返す．
+\end{enumerate}
+\subsubsection{入力}
+\label{sec:Baum-Welch:input}
+%% HMMの確率分布関数$p(X,Z|\theta)$,
+観測データ列 $X=\{\bvec{x}_1,\dots,\bvec{x}_N\}$，
+初期状態のパラメータ
+$\theta^{old} = \{\bvec{\pi}, A, \bvec{\phi}\}$ \\
+\hphantom{潜}潜在変数が出力される期待値
+$\gamma(z_{nk})$，$\xi(z_{n-1,j},z_{nk})$ 
+(EMの更新のたびに必要)
+\subsubsection{出力}
+\label{sec:Baum-Welch:output}
+最尤推定したパラメータ $\theta = \{\bvec{\pi}, A, \bvec{\phi}\}$
+\subsection{アルゴリズム}
+\label{sec:Baum-Welch:algorithm}
+\subsubsection{E step}
+\label{sec:Baum-Welch:e-step}
+尤度関数の期待値$Q(\theta, \theta^{old})$を
+$\gamma(z_{nk})$と$\xi(z_{n-1,j},z_{nk})$の式に変形する．
+
+そのように変形する理由は，
+section \ref{sec:Forward-Backward}で
+$\gamma(z_{nk})$と$\xi(z_{n-1,j},z_{nk})$
+を陽に求めることができるからである．
+
+式\eqref{eq:hmm-distribution}に注意すると，
+\begin{align}
+  %% \begin{aligned}
+    Q(\theta, \theta^{old})& =  \sum_Zp(Z| \theta^{old})\log p(X, Z| \theta) \\
+    & =  \sum_Zp(Z| \theta^{old})\log \left( p(\bvec{z}_1| \bvec{\pi})\prod_{n=2}^Np(\bvec{z}_n|\bvec{z}_{n-1},A)\prod_{n=1}^Np(\bvec{x}_n|\bvec{z}_n,\bvec{\phi}) \right) \\
+    & =  \sum_Zp(Z| \theta^{old})\left(\log p(\bvec{z}_1|\bvec{\pi}) + \sum_{n=2}^N\log p(\bvec{z}_n|\bvec{z}_{n-1},A) + \sum_{n=1}^N\log p(\bvec{x}_n|\bvec{z}_n,\bvec{\phi})\right) \\
+    & =  \sum_Zp(Z| \theta^{old})\log p(\bvec{\bvec{z}_1|\bvec{\pi}}) + \sum_Zp(Z| \theta^{old})\sum_{n=2}^N\log p(\bvec{z}_n|\bvec{z}_{n-1},A) + \sum_Zp(Z| \theta^{old})\sum_{n=1}^N\log p(\bvec{x}_n|\bvec{z}_n,\bvec{\phi}) \label{eq:q-org}
+  %% \end{aligned}
+\end{align}
+となる．さて，$p(Z|X,\theta^{old})$について，$Z$が１次マルコフモデルであることに気をつけると，
+\begin{align}
+  p(Z|X,\theta^{old}) &=  p(\bvec{z}_1, ..., \bvec{z}_N|X,\theta^{old}) \\
+  &=  p(\bvec{z}_1|X,\theta^{old})p(\bvec{z}_2, ...., \bvec{z}_N|\bvec{z}_1,X, \theta^{old}) \\
+  &\vdots \\
+  &=  p(\bvec{z}_1|X,\theta^{old})\prod_{n=2}^Np(\bvec{z}_n|\bvec{z}_{n-1},X,\theta^{old}) \label{eq:latent-prod-description}
+\end{align}
+と変形できる．
+ $\sum_Zp(Z|X,\theta^{old}) = 1$より，
+\begin{align}
+  &\sum_{\bvec{z}_1}p(\bvec{z}_1|X,\theta^{old})\sum_{\bvec{z}_2}p(\bvec{z}_2|\bvec{z}_1=\bvec{z}_1',X,\theta^{old})\dots \sum_{\bvec{z}_N}p(\bvec{z}_N|\bvec{z}_{N-1}=\bvec{z}_{N-1}',X,\theta^{old}) = 1 \label{eq:z-prod}
+\end{align}
+となる．ここで，式\eqref{eq:z-prod}の各項は
+確率密度関数の定義から$1$である．
+
+以上より，
+\eqref{eq:latent-prod-description},\eqref{eq:z-prod}
+から，\eqref{eq:q-org}の各項は，
+\begin{align}
+  & \sum_Zp(Z|X,\theta^{old})\log p(\bvec{z}_1,\pi) \\
+  &= \sum_{\bvec{z}_1}p(\bvec{z}_1|X,\theta^{old})\log p(\bvec{z}_1,\pi)\sum_{\bvec{z}_2,\dots \bvec{z}_N}p(\bvec{z}_n|\bvec{z}_{n-1},X,\theta) \\
+  &= \sum_{\bvec{z}_1}p(\bvec{z}_1|X,\theta^{old})\log p(\bvec{z}_1,\pi) \label{eq:initial}
+\end{align}
+
+\begin{align}
+  \sum_Zp(Z| \theta^{old})\sum_{n=2}^N\log p(\bvec{z}_n|\bvec{z}_{n-1},A) &= \sum_Zp(Z| \theta^{old})\{\log p(\bvec{z}_2|\bvec{z}_1) + \dots + \log p(\bvec{z}_N|\bvec{z}_{N-1})\} \\
+  &= \sum_Zp(Z| \theta^{old})\log p(\bvec{z}_2|\bvec{z}_1) + \dots + \sum_Zp(Z| \theta^{old})\log p(\bvec{z}_N|\bvec{z}_{N-1}) \\
+  &= \sum_{n=2}^N\sum_Zp(Z|\theta^{old})\log p(\bvec{z}_n|\bvec{z}_{n-1}) \\
+  &= \sum_{n=2}^N\sum_{\bvec{z}_n,\bvec{z}_{n-1}}p(\bvec{z}_n,\bvec{z}_{n-1})\log p(\bvec{z}_n|\bvec{z}_{n-1}) \\
+  &\hspace{10mm}\sum_{\bvec{z}_1,\dots,\bvec{z}_{n-2},\bvec{z}_{n+1},\dots,\bvec{z}_N}p(\bvec{z}_1,\dots,\bvec{z}_{n-2},\bvec{z}_{n+1},\dots,\bvec{z}_N|\bvec{z}_n,\bvec{z}_{n-1},\theta^{old}) \\
+  &= \sum_{n=2}^N\sum_{\bvec{z}_n,\bvec{z}_{n-1}}p(\bvec{z}_n,\bvec{z}_{n-1}|\theta^{old})\log p(\bvec{z}_n|\bvec{z}_{n-1}) \label{eq:transition}\\
+\end{align}
+\begin{align}
+  & \sum_Zp(Z|X,\theta^{old})\sum_{n=1}^N\log p(\bvec{x}_n|\bvec{z}_n,\bvec{\phi}) \\
+  &= \sum_{n=1}^N\sum_{\bvec{z}_n}p(\bvec{z}_n|X,\theta^{old})\log p(\bvec{x}_n|\bvec{z}_n,\bvec{\phi})\sum_{\bvec{z}_1,\dots,\bvec{z}_{n-1},\bvec{z}_{n+1},\dots,\bvec{z}_N}p(\bvec{z}_1,\dots,\bvec{z}_{n-1},\bvec{z}_{n+1},\dots,\bvec{z}_N|\bvec{z}_n,X,\theta^{old}) \\
+  &= \sum_{n=1}^N\sum_{\bvec{z}_n}p(\bvec{z}_n|X,\theta^{old})\log p(\bvec{x}_n|\bvec{z}_n,\bvec{\phi}) \label{eq:emission}
+\end{align}
+
+のように変形できる．
+
+\eqref{eq:initial}，\eqref{eq:transition}，
+\eqref{eq:emission}を\eqref{eq:q-org}に代入すると，
+\begin{align}
+  Q(\theta, \theta^{old}) &=  \sum_Zp(Z| \theta^{old})\log p(X, Z| \theta) \\
+  &= \sum_{\bvec{z}_1}p(\bvec{z}_1|X,\theta^{old})\log p(\bvec{z}_1,\pi) + \sum_{n=2}^N\sum_{\bvec{z}_n,\bvec{z}_{n-1}}p(\bvec{z}_n,\bvec{z}_{n-1}|\theta^{old})\log p(\bvec{z}_n|\bvec{z}_{n-1},A) \\
+  &{}\hspace{20mm} + \sum_{n=1}^N\sum_{\bvec{z}_n}p(\bvec{z}_n|X,\theta^{old})\log p(\bvec{x}_n|\bvec{z}_n,\bvec{\phi}) \label{eq:q-parse}
+\end{align}
+式\eqref{eq:q-parse}の各項について，
+式\eqref{eq:initial-probability},
+\eqref{eq:transition-probability}に気をつけながら
+潜在変数の期待値についての表現に直すと，
+\begin{align}
+  &\sum_{\bvec{z}_1}p(\bvec{z}_1|X,\theta^{old})\log p(\bvec{z}_1|\bvec{\pi}) \\
+  &= \sum_{\bvec{z}_1}\gamma(\bvec{z}_1)\log \sum_{k=1}^K\pi_k^{z_{1k}} \\
+  &= \gamma\left(\begin{bmatrix} 1 \\ 0 \\ \vdots \\ 0 \\ \end{bmatrix}\right) \log \sum_{k=1}^K\pi_k^{z_{1k}} + \dots + \gamma\left(\begin{bmatrix} 0 \\ \vdots \\ 0 \\ 1 \\ \end{bmatrix}\right) \log \sum_{k=1}^K\pi_k^{z_{1k}} \\
+  &= \gamma(z_{11})\log \pi_1 + \dots + \gamma(z_{1K})\log \pi_K \\
+  &= \sum_{k=1}^K\gamma(z_{1k})\log \pi_k \label{eq:initial-expect} \\\\
+  & \sum_{n=2}^N\sum_{\bvec{z}_n,\bvec{z}_{n-1}}p(\bvec{z}_n,\bvec{z}_{n-1}|\theta^{old})\log p(\bvec{z}_n|\bvec{z}_{n-1}) \\
+  &= \sum_{n=2}^N\sum_{\bvec{z}_n,\bvec{z}_{n-1}}\xi(\bvec{z}_n,\bvec{z}_{n-1})\log \prod_{k=1}^K\prod_{j=1}^KA_{jk}^{z_{n-1,j}z_{nk}} \\
+  %\log p(\bvec{z}_n|\bvec{z}_{n-1}) \\
+  &= \sum_{n=2}^N\xi\left(\begin{bmatrix} 1 \\ 0 \\ \vdots \\ 0 \\ \end{bmatrix},\begin{bmatrix} 1 \\ 0 \\ \vdots \\ 0 \\ \end{bmatrix}\right)\log A_{11} + \dots + \xi\left(\begin{bmatrix} 1 \\ 0 \\ \vdots \\ 0 \\ \end{bmatrix},\begin{bmatrix} 0 \\ 0 \\ \vdots \\ 1 \\ \end{bmatrix}\right)\log A_{1K} + \dots + \xi\left(\begin{bmatrix} 0 \\ 0 \\ \vdots \\ 1 \\ \end{bmatrix},\begin{bmatrix} 0 \\ 0 \\ \vdots \\ 1 \\ \end{bmatrix}\right)\log A_{KK} \\
+  &= \sum_{n=2}^N\sum_{j=1}^K\sum_{k=1}^K\xi(z_{n-1,j},z_{nk})\log A_{jk} \label{eq:transition-expect} \\\\
+  &\sum_{n=1}^N\sum_{\bvec{z}_n}p(\bvec{z}_n|X,\theta^{old})\log p(\bvec{x}_n|\bvec{z}_n,\bvec{\phi}) \\
+  &= \sum_{n=1}^N\sum_{k=1}^K\gamma(z_{nk})\log p(\bvec{x}_n|\phi_k) \label{eq:emission-expect} \\
+\end{align}
+
+
+\eqref{eq:initial-expect},\eqref{eq:transition-expect},\eqref{eq:emission-expect}を\eqref{eq:q-parse}に代入すると，
+
+\begin{align}
+  Q(\theta, \theta^{old}) = \sum_{k=1}^K\gamma(z_{1k})\log \pi_k + \sum_{n=2}^N\sum_{j=1}^K\sum_{k=1}^K\xi(z_{n-1,j},z_{nk})\log A_{jk} + \sum_{n=1}^N\sum_{k=1}^K\gamma(z_{nk})\log p(\bvec{x}_n|\phi_k) \label{eq:q-likelihood}
+\end{align}
+
+式\eqref{eq:q-likelihood}より，隠れマルコフモデルを表す
+確率分布関数の現在のパラメータに関する期待値を
+潜在変数が出力される期待値である
+$\gamma(z_{nk})$，$\xi(z_{n-1,j},z_{nk})$
+によって表すことができた．
+
+あとはこのモデルの期待値を最大化するパラメータをM stepで求めればよい．
+
+\subsubsection{M step}
+\label{sec:Baum-Welch:m-step}
+ラグランジュの未定乗数法を用いて，式\eqref{eq:q-likelihood}を
+最大化するパラメータを求める．パラメータの制約条件は，
+\begin{align}
+  &\sum_{k=1}^K\pi_k = 1 \label{eq:pi-constraint}\\
+  &\sum_{k=1}^KA_{jk} = 1 (\forall j, j\in \{1,\dots, K\}) \label{eq:A-constraint}
+\end{align}
+である．よって以下の関数$F(\bvec{\pi},A,\bvec{\phi})$を考えると，
+各ラグランジュ未定乗数を$\lambda_i (i\in \{1,\dots,K+1\})$として，
+\begin{align}
+  F(\bvec{\pi},A,\bvec{\phi}) = Q - \lambda_1\left(\sum_{k=1}^K\pi_k-1\right) -\sum_{j=1}^K\left\{\lambda_{j+1}\left(\sum_{k=1}^KA_{jk}-1\right)\right\}
+\end{align}
+という式で表すことができる.この関数を各パラメータに対して最大化する．
+
+まず，$\bvec{\pi}$について考えると，
+\begin{align}
+  \frac{\partial F}{\partial \pi_k} &= \frac{\partial Q}{\partial \pi_k} - \lambda_1 \\
+  &= \frac{\gamma(z_{1k})}{\pi_k} - \lambda_1= 0\\
+\end{align}
+より，
+\begin{align}
+  \pi_k = \frac{\gamma(z_{1k})}{\lambda_1}
+\end{align}
+となる．\eqref{eq:pi-constraint}から，
+\begin{align}
+  &\sum_{k=1}^K\pi_k = 1 \\
+  &\Leftrightarrow \sum_{k=1}^K\frac{\gamma(z_{1k})}{\lambda_1} = 1 \\
+  &\Leftrightarrow \lambda_1 = \sum_{k=1}^K\gamma(z_{1k})
+\end{align}
+以上より，
+\begin{align}
+  \pi_k = \frac{\gamma(z_{1k})}{\sum_{k=1}^K\gamma(z_{1k})} \label{eq:pi-max}
+\end{align}
+となる．
+%% 以下の式は間違っている可能性が大きい
+%% ここで，
+%% $\gamma(\bvec{z}_n)=p(\bvec{z}_n|X,\theta^{old})$より，
+%% \begin{align}
+%%   \gamma(\bvec{z}_n) &= \sum_{k=1}^Kp(z_{nk}=1|X,\theta^{old}) \\
+%%   &= \sum_{k=1}^K\sum_{\bvec{z}_n}p(\bvec{z}_n|X,\theta^{old})z_{nk} &\hspace{10mm}(z_{nk}=1)\\
+%%   &= \sum_{k=1}^K\sum_{\bvec{z}_n}\gamma(\bvec{z}_n)z_{nk} &\hspace{10mm}(z_{nk}=1)\\
+%%   &= \sum_{k=1}^K\gamma(z_{nk})\\
+%% \end{align}
+%% である．\\
+
+次に$A$について考える．
+\begin{align}
+  \frac{\partial F}{\partial A_{jk}} &= \sum_{n=2}^N\xi(z_{n-1,j},z_{nk})\frac{1}{A_{jk}} - \lambda_{j+1} = 0 \\
+  %% &= \frac{\gamma(z_{nk})}{A_{jk}} - \lambda_{j+1}= 0\\
+\end{align}
+より，
+\begin{align}
+  &A_{jk} = \frac{\sum_{n=2}^N\xi(z_{n-1,j},z_{nk})}{\lambda_{j+1}}  \\
+  %% \frac{\gamma(z_{nk})}{\lambda_{j+1}}
+\end{align}
+となる．\eqref{eq:A-constraint}から，
+\begin{align}
+  &\sum_{k=1}^KA_{jk} = 1 \\
+  &\sum_{k=1}^K\frac{\sum_{n=2}^N\xi(z_{n-1,j},z_{nk})}{\lambda_{j+1}} = 1 \\
+  &\Leftrightarrow \lambda_{j+1} = \sum_{k=1}^K\sum_{n=2}^N\xi(z_{n-1,j},z_{nk}) \\
+\end{align}
+以上より，
+\begin{align}
+  A_{jk} = \frac{\sum_{n=2}^N\xi(z_{n-1,j},z_{nk})}{\sum_{k=1}^K\sum_{n=2}^N\xi(z_{n-1,j},z_{nk})} \label{eq:A-max}
+\end{align}
+となる．
+%% 以下の式は間違っている可能性が大きい
+%% $\xi(z_{n-1,j},z_{nk})$については先ほどと同様に，
+%% \begin{align}
+%%   \xi(\bvec{z}_{n-1},\bvec{z}_n) = \sum_{k=1}^K\sum_{n=2}^N\xi(z_{n-1,j},z_{nk})
+%% \end{align}
+%% となる．
+
+最後に，$\bvec{\phi}$に関して$F$を最大化する．(証明しきれていない)
+$\phi$に関しては出力の確率分布関数がどのような分布を仮定するかによるので，
+ここでは正規分布のときの例を考える．すなわち，
+\begin{align}
+  &p(\bvec{x}_n|\phi_k) = \mathcal{N}(\bvec{x}|\bvec{\mu},\Sigma_k) \\
+  &\hphantom{p(\bvec{x}_n|\phi_k)}= \frac{1}{(2\pi)^{\frac{D}{2}}}\frac{1}{|\Sigma_k|^{\frac{1}{2}}}\exp \{-\frac{1}{2}(\bvec{x}-\bvec{\mu}_k)^{\mathrm{T}}\Sigma_k^{-1}(\bvec{x}-\bvec{\mu}_k)\} \\
+  &\Leftrightarrow \log p(\bvec{x}_n|\phi_k) = C - \frac{1}{2}\log |\Sigma_k| - \frac{1}{2}(\bvec{x}-\bvec{\mu}_k)^{\mathrm{T}}\Sigma_k^{-1}(\bvec{x}-\bvec{\mu}_k) \hspace{10mm}(C:定数)
+\end{align}
+よって，
+\begin{align}
+  \displaystyle &\frac{\partial F}{\partial \mu_k} = \sum_{n=1}^N\gamma(z_{nk})\left[(\bvec{x}_n-\bvec{\mu}_k)\{\Sigma_k^{-1} + (\Sigma_k^{-1})^{\mathrm{T}}\}\right] = 0\\
+  &\Leftrightarrow \{\Sigma_k^{-1} + (\Sigma_k^{-1})^{\mathrm{T}}\}\sum_{n=1}^N\gamma(z_{nk})(\bvec{x}_n-\bvec{\mu}_k) = 0 \\
+  &\Leftrightarrow \bvec{\mu}_k = \frac{\sum_{n=1}^N\gamma(z_{nk})\bvec{x}_n}{\sum_{n=1}^N\gamma(z_{nk})} \label{eq:mu-max}
+\end{align}
+また，
+\begin{align}
+  &\frac{\partial F}{\partial \Sigma_k} = ?? \\
+  &\Leftrightarrow \Sigma_k=\frac{\sum_{n=1}^N\gamma(z_{nk})(\bvec{x}_n-\bvec{\mu}_k)(\bvec{x}_n-\bvec{\mu}_k)^{\mathrm{T}}}{\sum_{n=1}^N\gamma(z_{nk})} \label{eq:sigma-max}
+\end{align}
+
+\eqref{eq:pi-max},\eqref{eq:A-max},\eqref{eq:mu-max},\eqref{eq:sigma-max}
+
+あとは後述するForward-Backward アルゴリズムを用いて，
+$\gamma(\bvec{z}_n)$と$\xi(\bvec{z}_{n-1},\bvec{z}_n)$
+について計算すれば
+モデルの期待値を陽に求めることができる．
+
+%% EOF

@@ -1,0 +1,53 @@
+\section{その他}
+\label{sec:others}
+\subsection{未解決}
+\label{subsec:others:I-don't-know}
+\begin{itemize}
+\item 各アルゴリズムの計算量の見積もりの証明
+\item Baum-Welchの正規分布の場合の平均と分散の最大化の計算
+\item $p(\bvec{x}_{n+1},\dots,\bvec{x}_N|\bvec{z}_n)=p(\bvec{x}_{n+1},\dots,\bvec{x}_N)$
+  にはなぜならない？←おそらく解決．
+  section \ref{subsubsec:others:notice:depend-independ} を参照．\\
+\item section \ref{sec:Baum-Welch:abst} Baum-Welch \\
+  期待値は全てのパラメータに
+  対して上に凸な関数なのか？そうでなければ微分して
+  $0$になるところで最大値をとることはいえない．
+\end{itemize}
+\subsection{気づいたことメモ}
+\label{subsec:others:notice}
+\subsubsection{独立変数，従属変数}
+\label{subsubsec:others:notice:depend-independ}
+$p(\bvec{x}_n|\bvec{z}_{n-1},\bvec{z}_n)=p(\bvec{x}_n|\bvec{z}_n)$だが，$p(\bvec{x}_n|\bvec{z}_{n-1})\neq p(\bvec{x}_n)$
+
+↑なぜ？
+
+仮説．時間のあるときにきちんと計算したい．
+おそらく条件付き確率の定義から注意深く計算していけば
+証明出来る気がする
+
+$\bvec{z}_n$が与えられたときは$\bvec{x}_n$は
+$\bvec{z}_{n-1}$に対して独立．$\bvec{x}_n$は
+$\bvec{z}_n$によってのみ決定されるから．
+ただし，$\bvec{z}_n$がないとき，つまり
+$p(\bvec{x}_n|\bvec{z}_{n-1})$のときは$\bvec{x}_n$は
+$p(\bvec{z}_{n-1})$に対して従属．
+なぜならば $\bvec{z}_n$が $\bvec{z}_{n-1}$に対して
+従属であり， $\bvec{x}_n$が $\bvec{z}_n$に対して従属だから．
+\subsubsection{Forward-Backward}
+\label{subsec:others:notice:fw-bw}
+Forward-Backwardは
+\begin{itemize}
+\item Viterbiと組み合わせて使われる場合と，
+\item Baum-Welchと組み合わせて使われる場合
+\end{itemize}
+の２種類がある．
+
+前者では
+まずViterbiをやって，モデルの最大事後確率を求める．
+つぎにその$p(Z|X,\theta)$を使って，
+各$p(\bvec{z}_n|X,\theta)$を求める．
+この場合は$\xi(\bvec{z}_{n-1},\bvec{z}_n)$は求めていない．
+
+後者では
+Baum-WelchでEMする際に$\gamma$,\ $\xi$の具体的な値が
+必要になるから，そのときにForward-Backwardで計算する．

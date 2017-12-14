@@ -1,0 +1,96 @@
+\section{Viterbi algorithm}
+\label{sec:Viterbi}
+\subsection{概要}
+\label{sec:Viterbi:abst}
+先ほどのForward-Backwardアルゴリズムでは，
+各潜在変数についての事後確率を求めた．
+しかし，各々の潜在変数について，
+観測データ列が与えられたときの事後確率が最大となるような
+潜在変数の列$\bvec{z}_1,\dots,\bvec{z}_N$を推定することは
+できない．
+%% 観測変数の列$\bvec{x}_1,\dots,\bvec{x}_N$が出力されるときの
+%% モデルの尤度関数を最大化したいときに
+%% Forward-Backwardアルゴリズムを適用することはできない．
+そこで提案されるのがViterbiアルゴリズムである．
+このアルゴリズムはある観測データ列
+$\bvec{x}_1,\dots,\bvec{x}_N$が出力されたときの
+潜在変数の列$\bvec{z}_1,\dots,\bvec{z}_N$
+の事後確率を最大化するアルゴリズムである．
+\subsubsection{入力}
+\label{sec:Viterbi:input}
+%% 隠れマルコフモデルの確率分布$p(X,Z)$,
+パラメータ$\theta = \{\bvec{\pi}, A, \bvec{\phi}\}$ \\
+\hphantom{観}観測データ列$\bvec{x}_1,\dots,\bvec{x}_N$
+\subsubsection{出力}
+\label{sec:Viterbi:output}
+事後確率$p(Z|X)$を最大化する
+潜在変数の列$\bvec{z}_1,\dots,\bvec{z}_N$ \\
+\hphantom{潜}任意の時点$i$における最大事後確率
+$p(\bvec{z}_1,\dots,\bvec{z}_i|X,\theta)$
+\subsection{アルゴリズム}
+\label{sec:Viterbi:algorithm}
+以下の式で与えられる$\omega(\bvec{z}_n)$を考える．
+\begin{align}
+  \omega(\bvec{z}_n) =
+  \begin{cases}
+    \max_{\bvec{z}_1,\dots,\bvec{z}_{n-1}}\log p(\bvec{x}_1,\dots,\bvec{x}_n,\bvec{z}_1,\dots,\bvec{z}_n)\hspace{10mm}&(n > 1) \label{eq:Viterbi:omega-induction}\\
+    \hspace{5mm}\omega(\bvec{z}_1) = \log (\bvec{x}_1,\bvec{z}_1)\hspace{5mm}&(n = 1)\\
+  \end{cases}
+  %% &\omega(\bvec{z}_n) = \max_{\bvec{z}_1,\dots,\bvec{z}_{n-1}}\log p(\bvec{x}_1,\dots,\bvec{x}_n,\bvec{z}_1,\dots,\bvec{z}_n) \label{eq:Viterbi:omega-induction}\\
+  %% &\omega(\bvec{z}_1) = \log (\bvec{x}_1,\bvec{z}_1) \\
+\end{align}
+
+以下，$\omega(\bvec{z}_n)$についての漸化式を解く．
+式\eqref{eq:Viterbi:omega-induction}より，
+\begin{align}
+  \omega(\bvec{z}_{n+1}) &= \max_{\bvec{z}_1,\dots,\bvec{z}_n}\log p(\bvec{x}_1,\dots,\bvec{x}_{n+1},\bvec{z}_1,\dots,\bvec{z}_{n+1}) \\
+  &= \max_{\bvec{z}_1,\dots,\bvec{z}_n}\log p(\bvec{z}_{n+1})p(\bvec{x}_1,\dots,\bvec{x}_{n+1},\bvec{z}_1,\dots,\bvec{z}_n|\bvec{z}_{n+1}) \\
+  &= \max_{\bvec{z}_1,\dots,\bvec{z}_n}\log p(\bvec{x}_{n+1}|\bvec{z}_{n+1})p(\bvec{z}_{n+1})p(\bvec{x}_1,\dots,\bvec{x}_n,\bvec{z}_1,\dots,\bvec{z}_n|\bvec{x}_{n+1},\bvec{z}_{n+1}) \\
+  &= \max_{\bvec{z}_1,\dots,\bvec{z}_n}\log p(\bvec{x}_{n+1}|\bvec{z}_{n+1})p(\bvec{z}_{n+1})p(\bvec{x}_1,\dots,\bvec{x}_n,\bvec{z}_1,\dots,\bvec{z}_n|\bvec{z}_{n+1}) \\
+  &= \log p(\bvec{x}_{n+1}|\bvec{z}_{n+1})+\max_{\bvec{z}_1,\dots,\bvec{z}_n}\log p(\bvec{z}_{n+1})p(\bvec{x}_1,\dots,\bvec{x}_n,\bvec{z}_1,\dots,\bvec{z}_n|\bvec{z}_{n+1}) \\
+  &= \log p(\bvec{x}_{n+1}|\bvec{z}_{n+1})+\max_{\bvec{z}_1,\dots,\bvec{z}_n}\log p(\bvec{z}_{n+1})p(\bvec{x}_1,\dots,\bvec{x}_n,\bvec{z}_1,\dots,\bvec{z}_n|\bvec{z}_{n+1}) \label{eq:omega-on-the-way}\\
+\end{align}
+ここで，$P = p(\bvec{z}_{n+1})p(\bvec{x}_1,\dots,\bvec{x}_n,\bvec{z}_1,\dots,\bvec{z}_n|\bvec{z}_{n+1})$
+とおくと，
+\begin{align}
+  P &= p(\bvec{z}_{n+1})p(\bvec{x}_1,\dots,\bvec{x}_n,\bvec{z}_1,\dots,\bvec{z}_n|\bvec{z}_{n+1}) \\
+  &= p(\bvec{x}_1,\dots,\bvec{x}_n,\bvec{z}_1,\dots,\bvec{z}_n,\bvec{z}_{n+1}) \\
+  &= p(\bvec{z}_n)p(\bvec{x}_1,\dots,\bvec{x}_n,\bvec{z}_1,\dots,\bvec{z}_{n+1}|\bvec{z}_n) \\
+  &= p(\bvec{z}_n)p(\bvec{x}_1,\dots,\bvec{x}_n,\bvec{z}_1,\dots|\bvec{z}_{n+1},\bvec{z}_n)p(\bvec{z}_{n+1}|\bvec{z}_n) \\
+  &= p(\bvec{z}_n)p(\bvec{x}_1,\dots,\bvec{x}_n,\bvec{z}_1,\dots|\bvec{z}_n)p(\bvec{z}_{n+1}|\bvec{z}_n) \\
+  &= p(\bvec{x}_1,\dots,\bvec{x}_n,\bvec{z}_1,\dots,\bvec{z}_n)p(\bvec{z}_{n+1}|\bvec{z}_n) \label{eq:omega-p}\\
+\end{align}
+と変形できる．式\eqref{eq:omega-p}を
+式\eqref{eq:omega-on-the-way}に代入すると，
+\begin{align}
+  \omega(\bvec{z}_{n+1}) &= \log p(\bvec{x}_{n+1}|\bvec{z}_{n+1})+\max_{\bvec{z}_1,\dots,\bvec{z}_n}\log P \\
+  &= \log p(\bvec{x}_{n+1}|\bvec{z}_{n+1})+\max_{\bvec{z}_1,\dots,\bvec{z}_n}\log  p(\bvec{x}_1,\dots,\bvec{x}_n,\bvec{z}_1,\dots,\bvec{z}_n)p(\bvec{z}_{n+1}|\bvec{z}_n) \\
+  \displaystyle &= \log p(\bvec{x}_{n+1}|\bvec{z}_{n+1})+\max_{\bvec{z}_n}\left\{\max_{\bvec{z}_1,\dots,\bvec{z}_{n-1}}\log  p(\bvec{x}_1,\dots,\bvec{x}_n,\bvec{z}_1,\dots,\bvec{z}_n)p(\bvec{z}_{n+1}|\bvec{z}_n)\right\} \\
+  \displaystyle &= \log p(\bvec{x}_{n+1}|\bvec{z}_{n+1})+\max_{\bvec{z}_n}\left\{\log p(\bvec{z}_{n+1}|\bvec{z}_n)+\max_{\bvec{z}_1,\dots,\bvec{z}_{n-1}}\log  p(\bvec{x}_1,\dots,\bvec{x}_n,\bvec{z}_1,\dots,\bvec{z}_n)\right\} \\
+  \displaystyle &= \log p(\bvec{x}_{n+1}|\bvec{z}_{n+1})+\max_{\bvec{z}_n}\left\{\log p(\bvec{z}_{n+1}|\bvec{z}_n)+\omega(\bvec{z}_n)\right\} \label{eq:Viterbi:omega-recursion}\\
+\end{align}
+となる．
+
+式\eqref{eq:Viterbi:omega-recursion}を$\omega(\bvec{z}_1)$から順に繰り返し計算することで
+$\omega(\bvec{z}_N)$を求めたら，
+$\displaystyle \bvec{z}_N' = \arg\max_{\bvec{z}_N}\omega(\bvec{z}_N)$を求め，
+このときの$\bvec{z}_N'$を出力する．
+つぎに，
+\begin{align}
+  &\omega(\bvec{z}_N') = \log p(\bvec{x}_N|\bvec{z}_N')+\max_{\bvec{z}_{N-1}}\left\{\log p(\bvec{z}_N'|\bvec{z}_{N-1})+\omega(\bvec{z}_{N-1})\right\} \\
+\end{align}
+の式から，
+\begin{align}
+  \bvec{z}_{N-1}' = \arg\max_{\bvec{z}_{N-1}}\left\{\log p(\bvec{z}_N'|\bvec{z}_{N-1})+\omega(\bvec{z}_{N-1})\right\}
+\end{align}
+となるような$\bvec{z}_{N-1}'$を求めることができる．
+以下これを$\bvec{z}_1'$まで繰り返し求めることで，
+観測データ列が与えられたときの事後確率を最大化するような
+潜在変数の列$\bvec{z}_1',\dots,\bvec{z}_N'$
+を求めることができる．
+
+また，計算の過程で任意の時点$i$における最大事後確率
+$p(\bvec{z}_1,\dots,\bvec{z}_i|X,\theta)$
+を求めることが出来る．
+
+%% EOF

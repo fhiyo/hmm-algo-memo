@@ -1,0 +1,162 @@
+\section{準備}
+\label{sec:prepare}
+\subsection{マルコフモデル}
+\label{sec:prepare:markov-model}
+まず，\textbf{マルコフモデル}について説明をする．
+マルコフモデルとは，時間に沿って順に観測されるデータである
+\textbf{時系列観測データ}の各データ (\textbf{観測変数}) が，
+そのデータが観測される時点$i$よりも
+過去のデータに対してのみ従属関係にあるようなデータ列が
+従うモデルのことである．
+なお，ある時点$i$での観測変数の個数は
+１つだけと仮定する．
+
+ある時系列観測データを
+$X \defeq \{\bvec{x}_1, \dots, \bvec{x}_N|\bvec{x}_i \in \mathbb{R}^D\}\ (D:\text{Dimension})$
+
+とおき，$N$個のデータ点の同時分布を考える．
+これは確率の乗法定理を用いることで，
+\begin{align}
+  %% \begin{aligned}
+    & p(\bvec{x}_1, \dots, \bvec{x}_N) \\
+    & = p(\bvec{x}_1)p(\bvec{x}_2, \dots, \bvec{x}_N| \bvec{x}_1) \\
+    & = p(\bvec{x}_1)p(\bvec{x}_2| \bvec{x}_1)p(\bvec{x}_3, \dots, \bvec{x}_N| \bvec{x}_1, \bvec{x}_2) \\
+    & = \dots \\
+    & = p(\bvec{x}_1)\prod_{n=2}^{N}p(\bvec{x}_n| \bvec{x}_{n-1}, \dots, \bvec{x}_1) \label{eq:prob-multiplication}\\
+  %% \end{aligned}
+\end{align}
+と書ける．%なお，式\eqref{eq:prob-multiplication}は
+%マルコフモデルでなくても成り立つ．
+
+\subsubsection{１次マルコフモデル}
+\label{sec:prepare:first-order-markov-model}
+次に，\textbf{１次マルコフモデル}について説明する．
+これはある時点$i$での観測変数が，
+その１つ前の時点の観測変数にのみ従属であるような
+確率モデルである．式\eqref{eq:prob-multiplication}
+を参考にして1次マルコフモデルを定式化すると，
+\begin{align}
+  & p(\bvec{x}_1, \dots, \bvec{x}_N) = p(\bvec{x}_1)\prod_{n=2}^{N}p(\bvec{x}_n|\bvec{x}_{n-1}) \label{eq:markov-model}\\
+\end{align}
+のように書ける．ここで，式\eqref{eq:markov-model}は
+\begin{align}
+  p(\bvec{x}_n| \bvec{x}_{n-1}, \dots, \bvec{x}_1) = p(\bvec{x}_n| \bvec{x}_{n-1})\hspace{10mm}(n\in \{1,\dots,N\})
+\end{align}
+という１次マルコフモデルの特性を定式化して導出した．
+
+\subsection{隠れマルコフモデル}
+\label{sec:prepare:hidden-markov-model}
+\textbf{隠れマルコフモデル} (Hidden Markov Model, \textbf{HMM})とは，データとして得られる状態
+ (観測変数) の他に，
+その観測変数がどの状態としてが出力されるかの確率に
+影響を与えるが，出力はされないために実際の状態がわからない
+離散的な値をとる\textbf{潜在変数}(\textbf{隠れ変数})
+というものを導入したマルコフモデルのことである．
+以下，潜在変数を$Z \defeq \{\bvec{z}_1, \dots, \bvec{z}_N\}$
+と表す．隠れマルコフモデルの具体的な条件を書くと，
+\begin{itemize}
+\item 観測変数$\bvec{x}_n$は潜在変数$\bvec{z}_n$の影響を受けて出力される
+\item 観測変数どうしは独立である
+\item 潜在変数どうしは1次マルコフモデルに従い生成される
+\end{itemize}
+となる．潜在変数の状態の個数である\textbf{状態数}を$K$，
+隠れマルコフモデルのパラメータをそれぞれ
+$\bvec{\pi}, A, \bvec{\phi}$とおき，
+$\theta = \{\bvec{\pi}, A, \bvec{\phi}\}$とおく．
+ただし，$\bvec{\pi} = (\pi_1,\dots,\pi_K)^{\mathrm T}$
+は潜在変数の初期変数である
+$\bvec{z}_1$の状態を決定する確率である
+\textbf{初期確率} (←用語は適切か？) を表し，
+$A = [A_{jk}]_{K\times K}$は,任意の時点での潜在変数の状態が
+$j$のとき，次の時点で潜在変数の状態が$k$に遷移する
+確率である\textbf{遷移確率}を表す．
+また，$\bvec{\phi}=(\phi_1,\dots,\phi_K)^{\mathrm T}$は任意の時点で潜在変数の状態が
+決定したとき，観測状態が出力される確率である
+\textbf{出力確率}を表す．
+ここで，$\pi_k \defeq p(z_{1k}=1)$, $A_{jk} \defeq p(z_{nk}|z_{n-1,j})$
+とする．
+
+このような条件のもとに隠れマルコフモデルを定式化すると
+以下のように表せる．
+\begin{align}
+  p(X,Z|\theta) &= p(\bvec{x}_1, \dots, \bvec{x}_N, \bvec{z}_1, \dots, \bvec{z}_N|\theta) \\
+  &= p(\bvec{z}_1|\theta)p(\bvec{x}_1, \dots, \bvec{x}_N, \dots, \bvec{z}_N|\bvec{z}_1,\theta) \\
+  &= p(\bvec{z}_1|\bvec{\pi})p(\bvec{x}_1, \dots, \bvec{x}_N,\bvec{z}_2, \dots, \bvec{z}_N|\bvec{z}_1,\theta) \\
+  &= p(\bvec{z}_1|\bvec{\pi})\prod_{n=2}^Np(\bvec{z}_n|\bvec{z}_{n-1},\theta)p(\bvec{x}_1, \dots, \bvec{x}_N|\bvec{z}_1,\dots,\bvec{z}_N,\theta) \\
+  &= p(\bvec{z}_1|\bvec{\pi})\prod_{n=2}^Np(\bvec{z}_n|\bvec{z}_{n-1},A)p(\bvec{x}_1, \dots, \bvec{x}_N|\bvec{z}_1,\dots,\bvec{z}_N,\theta) \\
+  &= p(\bvec{z}_1|\bvec{\pi})\prod_{n=2}^Np(\bvec{z}_n|\bvec{z}_{n-1},A)\prod_{n=1}^Np(\bvec{x}_n|\bvec{z}_n,\theta) \\
+  &= p(\bvec{z}_1| \bvec{\pi})\prod_{n=2}^Np(\bvec{z}_n|\bvec{z}_{n-1},A)\prod_{n=1}^Np(\bvec{x}_n|\bvec{z}_n,\bvec{\phi}) \label{eq:hmm-distribution}\\
+\end{align}
+
+初期確率$\bvec{\pi}$について，$\pi_k=p(z_{1k}=1)$より，
+\begin{align}
+  p(\bvec{z}_1|\bvec{\pi}) = \prod_{k=1}^K\pi_k^{z_{1k}} \label{eq:initial-probability}
+\end{align}
+と表すことができる．
+さらに，$A_{jk} = p(z_{nk}|z_{n-1,j})$より，
+\begin{align}
+  p(\bvec{z}_n|\bvec{z}_{n-1},A) = \prod_{k=1}^K\prod_{j=1}^KA_{jk}^{z_{n-1,j}z_{nk}} \label{eq:transition-probability}
+\end{align}
+と表せる．
+
+\subsection{数学的準備}
+\label{sec:prepare:math-prepare}
+各アルゴリズムの説明のために必要な数学的準備を行う．
+ある時系列観測データを
+$X = \{\bvec{x}_1, \dots, \bvec{x}_N\}$，
+
+その時系列観測データの裏にある潜在変数列を
+$Z = \{\bvec{z}_1, \dots, \bvec{z}_N\}$
+
+と表す．ただし，$x_n \in \mathbb{R}^D,\ (n\in \{1,\dots,N\})$とする．
+各$\bvec{z}_n$は，
+潜在変数の状態数を$K$とすると，
+\begin{align}
+  &\bvec{z}_n =
+  \begin{bmatrix}
+    z_{n1} \\
+    \vdots \\
+    z_{nK} \\
+  \end{bmatrix}\\
+  & z_{nk} \in \{0,1\}, (\forall n)\ n\in \{1,\dots,N\},
+  (\forall k)\ k \in \{0,\dots,K\} \\
+  &\sum_{k=1}^Kz_{nk} = 1, n\in \{1,\dots,N\}
+\end{align}
+を満たすものとする．つまり$\bvec{z}_n$は
+その$K$個あるベクトルの成分のうち
+どれか１つだけが$1$で残りが$0$であるような
+いわゆる1-of-K表現のベクトルである．
+
+これからEMアルゴリズムを用いて隠れマルコフモデルの
+パラメータの更新を行うにあたり，
+以下の記号を導入する．
+
+\begin{align}
+    Q(\theta, \theta^{old}) &\defeq \mathbb{E}[\log p(X, Z| \theta)] = \sum_Zp(Z| \theta^{old})\log p(X, Z| \theta) \\
+    \gamma(\bvec{z}_n) &\defeq p(\bvec{z}_n|X, \theta^{old}) \\
+    \xi(\bvec{z}_{n-1},\bvec{z}_n) &\defeq p(\bvec{z}_{n-1},\bvec{z}_n|X,\theta^{old}) \\
+    \gamma(z_{nk}) &\defeq \mathbb{E}[z_{nk}] = \sum_{\bvec{z}_n}\gamma(\bvec{z}_n)z_{nk} \\
+    \xi(z_{n-1,j},z_{nk}) &\defeq \mathbb{E}[z_{n-1,j}z_{nk}] = \sum_{\bvec{z}_{n-1},\bvec{z}_n}\xi(\bvec{z}_{n-1},\bvec{z}_n)z_{n-1,j}z_{nk} \\
+\end{align}
+ここで，$\theta^{old}$はパラメータの更新を行う前の
+古いパラメータを表している．上の各記号について簡単に説明すると，
+\begin{itemize}
+\item $Q(\theta,\theta^{old})$ \\
+  隠れマルコフモデルを表す確率分布$p(X,Z|\theta)$の
+  対数尤度関数の期待値
+\item $\gamma(\bvec{z}_n)$ \\
+  古いパラメータ$\theta^{old}$上での潜在変数$\bvec{z}_n$
+  の確率分布
+\item $\xi(\bvec{z}_{n-1},\bvec{z}_n)$ \\
+  古いパラメータ$\theta^{old}$上での
+  潜在変数の組$(\bvec{z}_{n-1},\bvec{z}_n)$の同時確率分布
+\item $\gamma(z_{nk})$ \\
+  $z_{nk}=1$となる期待値
+\item $\xi(z_{n-1,j},z_{nk})$ \\
+  $z_{n-1,j}=1,z_{nk}=1$となる期待値
+\end{itemize}
+
+である．なお，$\gamma(z_{nk})$，$\xi(z_{n-1,j},z_{nk})$を
+\textbf{負担率}と呼ぶ．
+
+%% EOF

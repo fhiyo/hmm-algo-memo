@@ -1,0 +1,53 @@
+\documentclass[a4paper]{jsarticle}
+
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\usepackage[dvipdfmx]{graphicx}
+\usepackage{ascmac}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{arydshln}
+\usepackage{url}
+\usepackage{cite}
+\usepackage{mathtools}
+%% \usepackage{refcheck}
+
+\setlength{\topmargin}{2em}
+\addtolength{\topmargin}{-1.5in}
+%% \setlength{\textheight}{62em}
+\setlength{\textheight}{67em}
+
+\newcommand{\bvec}[1]{\mbox{\boldmath $#1$}}
+\newcommand{\defeq}{\overset{\mathrm{def}}{=}}
+
+\title{HMM アルゴリズムメモ}
+\author{@fhiyo}
+\date{\today}
+\begin{document}
+\mathtoolsset{showonlyrefs=true,showmanualtags}
+\maketitle
+
+%%% intro %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{intro}
+
+%%% prepare %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{prepare}
+
+%%% Baum_Welch %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{baum_welch}
+
+%%% Forward-Backward %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{forward_backward}
+
+%%% Viterbi %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{viterbi}
+
+%%% others %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{others}
+
+\begin{thebibliography}{9}
+\bibitem{Bishop:PRMLBook:2006}Pattern Recognition and Machine Learning, Christopher M. Bishop, Springer\\
+\bibitem{R.Durbin:Biological sequence analysis}Biological sequence analysis, R.Durbin, CAMBRIDGE
+\end{thebibliography}
+\end{document}
+

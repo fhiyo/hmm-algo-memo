@@ -1,0 +1,116 @@
+\section{Forward-Backward algorithm}
+\label{sec:Forward-Backward}
+\subsection{概要}
+\label{sec:Forward-Backward:abst}
+モデルの各潜在変数の事後確率である
+$\gamma(\bvec{z}_n)$と$\xi(\bvec{z}_{n-1},\bvec{z}_n)$
+を求めるためのアルゴリズムである．
+観測変数$X$を取得したときの潜在変数の推定ができる．
+
+なおsection \ref{sec:Forward-Backward}，
+及びsection \ref{sec:Viterbi}
+では確率分布のパラメータ依存性を式に明記しないことにする．
+\subsubsection{入力}
+\label{sec:Forward-Backward:input}
+%% HMMの確率分布関数$p(X,Z|\theta)$,
+観測データ列 $X=\{\bvec{x}_1,\dots,\bvec{x}_N\}$，
+パラメータ $\theta^{old} = \{\bvec{\pi}, A, \bvec{\phi}\}$
+\subsubsection{出力}
+\label{sec:Forward-Backward:output}
+$\gamma(\bvec{z}_n)$と$\xi(\bvec{z}_{n-1},\bvec{z}_n)$
+の値
+\subsection{アルゴリズム}
+\label{sec:Forward-Backward:algorithm}
+Bayes' theoremを用いると，$\gamma(\bvec{z}_n)$は
+\begin{align}
+  \gamma(\bvec{z}_n) = p(\bvec{z}_n|X) = \frac{p(X|\bvec{z}_n)p(\bvec{z}_n)}{p(X)}
+\end{align}
+と表せる．ここで，任意の観測変数どうしは独立なので，
+\begin{align}
+  \gamma(\bvec{z}_n) &= \frac{p(X|\bvec{z}_n)p(\bvec{z}_n)}{p(X)} \\
+  &= \frac{p(\bvec{x}_1,\dots,\bvec{x}_N|\bvec{z}_n)p(\bvec{z}_n)}{p(X)} \\
+  &= \frac{p(\bvec{x}_1,\dots,\bvec{x}_n|\bvec{z}_n)p(\bvec{x}_{n+1},\dots,\bvec{x}_N|\bvec{x}_1,\dots,\bvec{x}_n,\bvec{z}_n)p(\bvec{z}_n)}{p(X)} \\
+  &= \frac{p(\bvec{x}_1,\dots,\bvec{x}_n,\bvec{z}_n)p(\bvec{x}_{n+1},\dots,\bvec{x}_N|\bvec{x}_1,\dots,\bvec{x}_n,\bvec{z}_n)}{p(X)} \\
+  &= \frac{p(\bvec{x}_1,\dots,\bvec{x}_n,\bvec{z}_n)p(\bvec{x}_{n+1},\dots,\bvec{x}_N|\bvec{z}_n)}{p(X)} \\
+  &= \frac{\alpha(\bvec{z}_n)\beta(\bvec{z}_n)}{p(X)} \\
+  &= \frac{\alpha(\bvec{z}_n)\beta(\bvec{z}_n)}{\sum_{\bvec{z}_n}\alpha(\bvec{z}_n)\beta(\bvec{z}_n)} \label{eq:fwbw-gamma} \\
+\end{align}
+と表すことが出来る．ただし，
+\begin{align}
+  &\alpha(\bvec{z}_n)\defeq
+  \begin{cases}
+    \displaystyle \prod_{k=1}^K\left\{\pi_kp(\bvec{x}_1|\phi_k)\right\}^{z_{nk}}&\hspace{10mm} (n = 1)\\
+    p(\bvec{x}_1,\dots,\bvec{x}_n,\bvec{z}_n)&\hspace{10mm} (n\in \{2,\dots,N\})
+  \end{cases} \\\\
+    &\beta(\bvec{z}_n)\defeq
+  \begin{cases}
+    1&\hspace{10mm} (n = N)\\
+    p(\bvec{x}_{n+1},\dots,\bvec{x}_N|\bvec{z}_n)&\hspace{10mm} (n\in \{1,\dots,N-1\})\\
+  \end{cases}
+\end{align}
+とする．このように定義すると，$\alpha(\bvec{z}_n)$,$\beta(\bvec{z}_n)$のそれぞれについて漸化式を立てることができ，
+\begin{align}
+  \alpha(\bvec{z}_n) &= p(\bvec{x}_1,\dots,\bvec{x}_n,\bvec{z}_n) \\
+  &= p(\bvec{z}_n)p(\bvec{x}_1,\dots,\bvec{x}_n|\bvec{z}_n) \\
+  &= p(\bvec{z}_n)p(\bvec{x}_n|\bvec{z}_n)p(\bvec{x}_1,\dots,\bvec{x}_{n-1}|\bvec{x}_n,\bvec{z}_n) \\
+  &= p(\bvec{z}_n)p(\bvec{x}_n|\bvec{z}_n)p(\bvec{x}_1,\dots,\bvec{x}_{n-1}|\bvec{z}_n) \\
+  &= p(\bvec{x}_n|\bvec{z}_n)p(\bvec{x}_1,\dots,\bvec{x}_{n-1},\bvec{z}_n) \\
+  &= p(\bvec{x}_n|\bvec{z}_n)\sum_{\bvec{z}_{n-1}}p(\bvec{x}_1,\dots,\bvec{x}_{n-1},\bvec{z}_{n-1},\bvec{z}_n) \\
+  &= p(\bvec{x}_n|\bvec{z}_n)\sum_{\bvec{z}_{n-1}}p(\bvec{z}_{n-1},\bvec{z}_n)p(\bvec{x}_1,\dots,\bvec{x}_{n-1}|\bvec{z}_{n-1},\bvec{z}_n) \\
+  &= p(\bvec{x}_n|\bvec{z}_n)\sum_{\bvec{z}_{n-1}}p(\bvec{z}_{n-1},\bvec{z}_n)p(\bvec{x}_1,\dots,\bvec{x}_{n-1}|\bvec{z}_{n-1}) \\
+  &= p(\bvec{x}_n|\bvec{z}_n)\sum_{\bvec{z}_{n-1}}p(\bvec{z}_{n-1})p(\bvec{z}_n|\bvec{z}_{n-1})p(\bvec{x}_1,\dots,\bvec{x}_{n-1}|\bvec{z}_{n-1}) \\
+  &= p(\bvec{x}_n|\bvec{z}_n)\sum_{\bvec{z}_{n-1}}p(\bvec{x}_1,\dots,\bvec{x}_{n-1},\bvec{z}_{n-1})p(\bvec{z}_n|\bvec{z}_{n-1}) \\
+  &= p(\bvec{x}_n|\bvec{z}_n)\sum_{\bvec{z}_{n-1}}\alpha(\bvec{z}_{n-1})p(\bvec{z}_n|\bvec{z}_{n-1}) \label{eq:alpha-recursive}
+\end{align}
+
+$\beta$についても同様にして計算すると，
+\begin{align}
+  \beta(\bvec{z}_n) &= p(\bvec{x}_{n+1},\dots,\bvec{x}_N|\bvec{z}_n) \\
+  &= \sum_{\bvec{z}_{n+1}}p(\bvec{x}_{n+1},\dots,\bvec{x}_N,\bvec{z}_{n+1}|\bvec{z}_n) \\
+  &= \sum_{\bvec{z}_{n+1}}p(\bvec{z}_{n+1}|\bvec{z}_n)p(\bvec{x}_{n+1},\dots,\bvec{x}_N|\bvec{z}_{n+1},\bvec{z}_n) \\
+  &= \sum_{\bvec{z}_{n+1}}p(\bvec{z}_{n+1}|\bvec{z}_n)p(\bvec{x}_{n+1},\dots,\bvec{x}_N|\bvec{z}_{n+1}) \\
+  &= \sum_{\bvec{z}_{n+1}}p(\bvec{z}_{n+1}|\bvec{z}_n)p(\bvec{x}_{n+1}|\bvec{z}_{n+1})p(\bvec{x}_{n+2},\dots,\bvec{x}_N|\bvec{x}_{n+1},\bvec{z}_{n+1}) \\
+  &= \sum_{\bvec{z}_{n+1}}p(\bvec{x}_{n+2},\dots,\bvec{x}_N|\bvec{z}_{n+1})p(\bvec{x}_{n+1}|\bvec{z}_{n+1})p(\bvec{z}_{n+1}|\bvec{z}_n) \\
+  &= \sum_{\bvec{z}_{n+1}}\beta(\bvec{z}_{n+1})p(\bvec{x}_{n+1}|\bvec{z}_{n+1})p(\bvec{z}_{n+1}|\bvec{z}_n) \label{eq:beta-recursive}
+\end{align}
+となる．
+
+\eqref{eq:alpha-recursive}, \eqref{eq:beta-recursive}
+後は漸化式を解けば$\alpha(\bvec{z}_n)$,\ $\beta(\bvec{z}_n)$
+は陽に求まる．次は$\gamma(\bvec{z}_n)$,\ $\xi(\bvec{z}_{n-1},\bvec{z}_n)$を$\alpha,\beta$を使って表すことが出来れば
+任意の潜在変数の最尤値が求まり，目的が達成される．
+
+ところで式\eqref{eq:fwbw-gamma}の分母について，
+$p(X)=\sum_{\bvec{z}_n}\alpha(\bvec{z}_n)\beta(\bvec{z}_n)$は
+任意の$n$について成り立つので，
+\begin{align}
+  p(X) &= \sum_{\bvec{z}_n}\alpha(\bvec{z}_n)\beta(\bvec{z}_n) \\
+  &= \sum_{\bvec{z}_N}\alpha(\bvec{z}_N)\beta(\bvec{z}_N) \\
+  &= \sum_{\bvec{z}_N}\alpha(\bvec{z}_N) \\
+\end{align}
+で計算することが出来る．つまり式\eqref{eq:fwbw-gamma}は
+\begin{align}
+  \gamma(\bvec{z}_n) = \frac{\alpha(\bvec{z}_n)\beta(\bvec{z}_n)}{\sum_{\bvec{z}_N}\alpha(\bvec{z}_N)} \label{eq:fwbw-gamma-2}
+\end{align}
+と表せる．次に
+$\xi(\bvec{z}_{n-1},\bvec{z}_n)$について考える．
+\begin{align}
+  \xi(\bvec{z}_{n-1},\bvec{z}_n) &= p(\bvec{z}_{n-1},\bvec{z}_n|X) \\
+  &= \frac{p(X|\bvec{z}_{n-1},\bvec{z}_n)p(\bvec{z}_{n-1},\bvec{z}_n)}{p(X)} \\
+  &= \frac{p(\bvec{x}_1,\dots,\bvec{x}_n|\bvec{z}_{n-1},\bvec{z}_n)p(\bvec{x}_{n+1},\dots,\bvec{x}_N|\bvec{x}_1,\dots,\bvec{x}_n,\bvec{z}_{n-1},\bvec{z}_n)p(\bvec{z}_{n-1},\bvec{z}_n)}{p(X)} \\
+  &= \frac{p(\bvec{x}_1,\dots,\bvec{x}_n|\bvec{z}_{n-1},\bvec{z}_n)p(\bvec{x}_{n+1},\dots,\bvec{x}_N|\bvec{z}_{n-1},\bvec{z}_n)p(\bvec{z}_{n-1},\bvec{z}_n)}{p(X)} \\
+  &= \frac{p(\bvec{x}_1,\dots,\bvec{x}_n|\bvec{z}_{n-1},\bvec{z}_n)p(\bvec{x}_{n+1},\dots,\bvec{x}_N|\bvec{z}_n)p(\bvec{z}_{n-1},\bvec{z}_n)}{p(X)} \\
+  &= \frac{p(\bvec{x}_1,\dots,\bvec{x}_{n-1}|\bvec{z}_{n-1},\bvec{z}_n)p(\bvec{x}_n|\bvec{z}_{n-1},\bvec{z}_n)p(\bvec{x}_{n+1},\dots,\bvec{x}_N|\bvec{z}_n)p(\bvec{z}_{n-1},\bvec{z}_n)}{p(X)} \\
+  &= \frac{p(\bvec{x}_1,\dots,\bvec{x}_{n-1}|\bvec{z}_{n-1})p(\bvec{x}_n|\bvec{z}_n)p(\bvec{x}_{n+1},\dots,\bvec{x}_N|\bvec{z}_n)p(\bvec{z}_{n-1},\bvec{z}_n)}{p(X)} \\
+  &= \frac{p(\bvec{x}_1,\dots,\bvec{x}_{n-1},\bvec{z}_{n-1})p(\bvec{x}_n|\bvec{z}_n)p(\bvec{x}_{n+1},\dots,\bvec{x}_N|\bvec{z}_n)p(\bvec{z}_n|\bvec{z}_{n-1})}{p(X)} \\
+  &= \frac{\alpha(\bvec{z}_{n-1})p(\bvec{x}_n|\bvec{z}_n)p(\bvec{z}_n|\bvec{z}_{n-1})\beta(\bvec{z}_n)}{p(X)} \\
+  &= \frac{\alpha(\bvec{z}_{n-1})p(\bvec{x}_n|\bvec{z}_n)p(\bvec{z}_n|\bvec{z}_{n-1})\beta(\bvec{z}_n)}{\sum_{\bvec{z}_N}\alpha(\bvec{z}_N)} \label{eq:fwbw-xi}\\
+\end{align}
+
+\eqref{eq:fwbw-gamma-2}と\eqref{eq:fwbw-xi}より
+目標は達成された．
+
+%% \subsubsection{独立変数，従属変数についてのメモ}
+%% \label{sec:dependent-independent}
+
+%% EOF
