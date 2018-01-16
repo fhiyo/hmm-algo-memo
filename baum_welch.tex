@@ -205,7 +205,7 @@ $\gamma(z_{nk})$，$\xi(z_{n-1,j},z_{nk})$
 %% \end{align}
 %% となる．
 
-最後に，$\bvec{\phi}$に関して$F$を最大化する．(証明しきれていない)
+最後に，$\bvec{\phi}$に関して$F$を最大化する．
 $\phi$に関しては出力の確率分布関数がどのような分布を仮定するかによるので，
 ここでは正規分布のときの例を考える．すなわち，
 \begin{align}
@@ -221,13 +221,35 @@ $\phi$に関しては出力の確率分布関数がどのような分布を仮�
 \end{align}
 また，
 \begin{align}
-  &\frac{\partial F}{\partial \Sigma_k} = ?? \\
+  % &\frac{\partial F}{\partial \Sigma_k} = ?? \\
+  &\frac{\partial F}{\partial \Sigma_k} = \frac{\partial}{\partial \Sigma_k} \sum_{n=1}^{N}\sum_{k'=1}^{K}\gamma(z_{nk'}) \left\{ C - \frac{1}{2}\log |\Sigma_{k'}| - \frac{1}{2}(\bvec{x}-\bvec{\mu})^\mathrm{T}\Sigma_{k'}^{-1}(\bvec{x}-\bvec{\mu}) \right\} = 0\\
+  &\Leftrightarrow \sum_{n=1}^{N}\gamma(z_{nk}) \frac{\partial}{\partial \Sigma_k}\log |\Sigma_k| + \sum_{n=1}^{N}\gamma(z_{nk}) \frac{\partial}{\partial \Sigma_k} (\bvec{x}-\bvec{\mu})^\mathrm{T}\Sigma_{k}^{-1}(\bvec{x}-\bvec{\mu}) = 0 \label{eq:sigma-max-pre}\\
+\end{align}
+
+ここで，任意の行列$A$とベクトル$\bvec{x}$について，
+\begin{align}
+  \displaystyle \frac{\partial}{\partial A} \log |A| = \left ( A^{-1}\right )^\mathrm{T}
+\end{align}
+
+と，
+
+\begin{align}
+  \displaystyle \frac{\partial}{\partial A} \left ( \bvec{x}^\mathrm{T}A^{-1}\bvec{x}\right ) &= \frac{\partial}{\partial A}\mathrm{trace}\left ( A^{-1} \bvec{x} \bvec{x}^\mathrm{T} \right ) \\
+  &= -A^{-1} \bvec{x} \bvec{x}^\mathrm{T} A^{-1}
+\end{align}
+
+である事実を利用すると\footnotemark，\eqref{eq:sigma-max-pre}は，
+\begin{align}
+  &\sum_{n=1}^{N}\gamma(z_{nk})  \Sigma_k^{-1} - \sum_{n=1}^{N}\gamma(z_{nk}) \Sigma_k^{-1}  \left (\bvec{x}_n - \bvec{\mu}_k \right ) \left ( \bvec{x}_n - \bvec{\mu}_k \right ) ^\mathrm{T} \Sigma_k^{-1} = 0 \\
   &\Leftrightarrow \Sigma_k=\frac{\sum_{n=1}^N\gamma(z_{nk})(\bvec{x}_n-\bvec{\mu}_k)(\bvec{x}_n-\bvec{\mu}_k)^{\mathrm{T}}}{\sum_{n=1}^N\gamma(z_{nk})} \label{eq:sigma-max}
 \end{align}
 
-\eqref{eq:pi-max},\eqref{eq:A-max},\eqref{eq:mu-max},\eqref{eq:sigma-max}
+\footnotetext{PRMLの確率分布の章の練習問題の解答にもう少し細かい式展開があったはず．}
 
-あとは後述するForward-Backward アルゴリズムを用いて，
+であることがわかる．なお，$\Sigma_k^{-1}$は精度行列と呼ばれるものであり，対称行列である
+ことから$\left (\Sigma_k^{-1} \right )^{\mathrm{T}} = \Sigma_k^{-1}$であることに注意する．
+
+\eqref{eq:pi-max},\eqref{eq:A-max},\eqref{eq:mu-max},\eqref{eq:sigma-max} と，後述するForward-Backward アルゴリズムを用いて
 $\gamma(\bvec{z}_n)$と$\xi(\bvec{z}_{n-1},\bvec{z}_n)$
 について計算すれば
 モデルの期待値を陽に求めることができる．
